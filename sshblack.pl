@@ -1,12 +1,12 @@
 #!/usr/bin/perl -w
 #
-# sshblack.pl Version 2.8
+# sshblack.pl Version 2.8.1
 #
 # based on mailmgr (c) 2003, Julian Haight, All Rights reserved under GPL license:
 # http://www.gnu.org/licenses/gpl.txt
 # Modified on 02AUG04 as provided under GNU GPL licensing
 #
-#     See http://www.pettingers.org/code/sshblack.html 
+#     See http://www.pettingers.org/code/sshblack.html
 #     for details on this and a complete README.TXT file and INSTALL.TXT file
 # -------------------------------------------------------
 # This is a script which tails the security log file and dynamically blocks
@@ -23,22 +23,22 @@
 # including apache (web) logs and sendmail (mail) logs.  The
 # aggressiveness can be adjusted by setting the variables in the
 # first few lines.  It will probably work well right out of the box.
-# 
+#
 #
 # Setup:  You need to create the initial chain that ssh-black will work with.
 ##      For iptables, you would do this:
-# iptables -N BLACKLIST 
+# iptables -N BLACKLIST
 ##      This creates a new chain called BLACKLIST
 ##      Then you would do this:
 # iptables -A INPUT -p tcp -m tcp --dport 22 --syn -j BLACKLIST
 ##      Send all TCP port 22 packets through the chain.  We will be adding
 ##      DROP jumps to this chain with the program below. Note this example
-##      command uses the add (-A) command which will place the new rule at 
-##      the END of the INPUT chain.  Move it as necessary or use the 
-##      insert (-I) command instead. 
-##      
+##      command uses the add (-A) command which will place the new rule at
+##      the END of the INPUT chain.  Move it as necessary or use the
+##      insert (-I) command instead.
+##
 #
-# If you have the DAEMONIZE variable set below, you can run the script by 
+# If you have the DAEMONIZE variable set below, you can run the script by
 # simply typing the filename from the command prompt. If you clear the
 # DAEMONIZE variable, you will need to place it in the background manually
 # or let it run from the console prompt.
@@ -65,7 +65,7 @@ my($CACHE) = '/var/tmp/ssh-blacklist-pending';
 #
 # REGEX for whitelisted IPs - never blacklist these addresses
 my($LOCALNET) = '^(?:127\.0\.0\.1|192\.168\.0)';
-# 
+#
 # Set $ADDRULE to the complete command line instruction for ADDING
 # attackers to the blacklist with the following change:
 # - Substitute the literal string 'ipaddress' in the location where
@@ -77,15 +77,15 @@ my($LOCALNET) = '^(?:127\.0\.0\.1|192\.168\.0)';
 # ######### ########### IPTABLES VERSION ############ ###########
 #
 my($ADDRULE) = '/sbin/iptables -I BLACKLIST -s ipaddress -j DROP';
-# my($ADDRULE) = '/sbin/iptables -A INPUT -s ipaddress -j DROP'; #Generic
+# my($ADDRULE) = '/sbin/iptables -I INPUT -s ipaddress -j DROP'; #Generic
 #
 #
-# Set $DELRULE to the complete command line instruction for REMOVING 
+# Set $DELRULE to the complete command line instruction for REMOVING
 # attackers from the blacklist with the following change:
-# - Substitute the literal string 'ipaddress' in the location where 
+# - Substitute the literal string 'ipaddress' in the location where
 # you want the attacker's IP address to be.
 #
-# Please see the SSHBLACK HOMEPAGE for many more examples of commands
+# Please see the SSHBLACK website for many more examples of commands
 #
 # ######### ########### IPTABLES VERSION ############ ###########
 #
@@ -117,9 +117,9 @@ my($MAXHITS) = 4;
 #
 # Maximum number of address listings before we hibernate.
 # This is an anti-DoS measure that will likely never fire.
-my($DOSBAIL) = 50;
+my($DOSBAIL) = 200;
 #
-# Set the level of verbosity. 1 = more periodic detail printed.
+# Set the level of verbosity.  1 = more periodic detail printed.
 # 0 = only important stuff will be printed.
 my($CHATTY) = 1;
 #
@@ -198,8 +198,9 @@ sub taillog {
            chop($line);
            if (($REASONS) && ($line =~ m/$REASONS/)) {
                $reason = $1;
-               if ($line =~ m/($IP)/) {
-                  $ip = $1;
+               if ($line =~ m/$IP/) {
+                  $ip = ($line =~ m/$IP/g) [-1];
+
                   logit("Watching $ip as potential attacker",$CHATTY,'0');
 
                  open(LIST, $CACHE) || print STDERR "Error opening $CACHE: $!\n";

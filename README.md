@@ -1,4 +1,4 @@
-README.TXT for sshblack Version 2.8
+README.TXT for sshblack Version 2.8.1
 
 see http://www.pettingers.org/code/sshblack.html
 
@@ -135,9 +135,28 @@ enabled where it would look up the FQDN of the IP address and report that in the
 E-mails and logs.  I pulled this at the last minute over concerns about DNS 
 failures/delays and what it would do to script execution.  This capability may 
 make it back into a future version.
-  
+
+Version 2.8.1.  The is a minor fix to address a potential DoS attack against 
+sshblack.  This potential attack could be minimized by proper use of the 
+whitelist however the ability of attacker to fill up your blacklist quickly 
+still exists without this fix.  The attack vulnerability arises when an attacker
+places dotted IP addresses in the username field of their SSH initiation.  So if
+the attacker uses something like 192.168.100.100 for their username, the log lines
+appears as:
+
+Nov 11 19:17:57 stinky sshd[31205]: Invalid user 192.168.100.100 from 209.131.36.158
+
+Previous versions of sshblack would pick up the first IP address in the log lines, 
+not the last.  So in this example, it would eventually blacklist 192.168.100.100 
+instead of the actual attacker at 209.131.36.158.  This was easy to solve by 
+modifying the REGEX that looks for the IP address.  This was the only functional
+change made from Version 2.8.
+
 
 FAQ (No, really, I get these all the time)
+
+Please also see http://www.pettingers.org/code/sshblack-notes.html for things
+not covered here.
 -------------------
 
 1) What is sshblack?  
@@ -206,14 +225,14 @@ but won't match x.192.168.0
 
    So lets do an example with some other (fictional) addresses.
 
-   Say the machine I'm trying to protect is at 68.142.251.95
+   Say the machine I'm trying to protect is at 220.50.50.1
    Let's say my machine sits on a Class C network with other machines that I 
-trust implicitly. That network is going to be 68.142.251.0/24 or 
-86.142.251.0/255.255.255.0 or however you want to note it. But remember, the 
+trust implicitly. That network is going to be 220.50.50.0/24 or 
+220.50.50.0/255.255.255.0 or however you want to note it. But remember, the 
 sshblack script doesn't think of these addresses as IP addresses, it is looking 
 at them as a string, as text. So we only need the first three numbers -- we are 
 ignoring or wild-carding the last number.
-   So this REGEX is going to become 68\.142\.251
+   So this REGEX is going to become 220\.50\.50
 
    Let's also say that we want to make sure we don't blacklist ourselves as we 
 log in from our office address which resides on the other side of town on a 
@@ -223,7 +242,7 @@ going to wildcard anything there.
 
    Now let's put all this together for our whitelist ($LOCALNET) definition.
 
-   my($LOCALNET) = '^(?:127\.0\.0\.1|68\.142\.251|66\.249\.64\.68)';
+   my($LOCALNET) = '^(?:127\.0\.0\.1|220\.50\.50|66\.249\.64\.68)';
 
    Note I've used the pipe character (|) between all my entries and I didn't 
 forget that pesky semi-colon at the end of the line.

@@ -1,4 +1,4 @@
-INSTALL.TXT for sshblack.pl Version 2.8
+INSTALL.TXT for sshblack.pl Version 2.8.1
 
 see http://www.pettingers.org/code/sshblack.html
 
