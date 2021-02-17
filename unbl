@@ -9,5 +9,5 @@
 # Note that network notation is also allowed:
 #   e.g. 192.0.0.0/16
 
-/sbin/iptables -D BLACKLIST -s $1 -j DROP
-
+firewall-cmd --direct --remove-rule ipv4 filter BLACKLIST 0 -s $1 -j DROP
+firewall-cmd --reload
