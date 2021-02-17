@@ -11,4 +11,12 @@ The CLI command ```firewall-cmd``` is now used to administer the firewall.
 Installation
 ------------
 
-The files in this folder are installed to the system using the script ```install.sh```.
+The files in this folder are installed to the system using the script ```install.sh```
+which has been tested on CentOS 7 and 8 systems.
+
+In addition, this crontab job is useful for getting E-mail alerts:
+
+```
+0 8 * * * /bin/grep user=root /var/log/secure; /bin/grep Evil /var/log/messages
+```
+
