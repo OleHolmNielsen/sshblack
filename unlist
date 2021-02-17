@@ -42,9 +42,10 @@ my($CACHE) = '/var/tmp/ssh-blacklist-pending';
 #
 # ######### ########### IPTABLES VERSION ############ ###########
 #
- my($DELRULE) = '/sbin/iptables -D BLACKLIST -s ipaddress -j DROP';
-# my($DELRULE) = '/sbin/iptables -D INPUT -s ipaddress -j DROP'; #Generic
-#
+
+# Using firewall-cmd on CentOS 7
+my($DELRULE) = '/usr/bin/firewall-cmd --direct --remove-rule ipv4 filter BLACKLIST 0 -s ipaddress -j DROP; /usr/bin/firewall-cmd --reload';
+
 #
 ########### No user defined paramters below ################
 #

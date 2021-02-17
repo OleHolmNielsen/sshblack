@@ -41,9 +41,10 @@ my($CACHE) = '/var/tmp/ssh-blacklist-pending';
 #
 # ######### ########### IPTABLES VERSION ############ ###########
 #
- my($ADDRULE) = '/sbin/iptables -I BLACKLIST -s ipaddress -j DROP';
-# my($ADDRULE) = '/sbin/iptables -A INPUT -s ipaddress -j DROP'; #Generic
-#
+
+# Using firewall-cmd on CentOS 7
+my($ADDRULE) = '/usr/bin/firewall-cmd --direct --add-rule ipv4 filter BLACKLIST 0 -s ipaddress -j DROP; /usr/bin/firewall-cmd --reload';
+
 #
 ########### No user defined paramters below ################
 #

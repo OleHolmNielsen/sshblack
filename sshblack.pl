@@ -61,10 +61,13 @@ my($LOG) = '/var/log/secure';
 my($OUTPUTLOG) = '/var/log/sshblacklisting';
 #
 # The text database file to keep track of attackers
-my($CACHE) = '/var/tmp/ssh-blacklist-pending';
+# my($CACHE) = '/var/tmp/ssh-blacklist-pending';
+my($CACHE) = '/var/lib/sshblack/ssh-blacklist-pending';
 #
 # REGEX for whitelisted IPs - never blacklist these addresses
-my($LOCALNET) = '^(?:127\.0\.0\.1|192\.168\.0)';
+# 
+# my($LOCALNET) = '^(?:127\.0\.0\.1|192\.168\.0)';
+my($LOCALNET) = '^(?:127\.0\.0\.1|130\.225\.86|130\.225\.87|10\.54)';
 #
 # Set $ADDRULE to the complete command line instruction for ADDING
 # attackers to the blacklist with the following change:
@@ -75,8 +78,11 @@ my($LOCALNET) = '^(?:127\.0\.0\.1|192\.168\.0)';
 #
 #
 # ######### ########### IPTABLES VERSION ############ ###########
-#
-my($ADDRULE) = '/sbin/iptables -I BLACKLIST -s ipaddress -j DROP';
+
+# Using firewall-cmd on CentOS 7
+my($ADDRULE) = '/usr/bin/firewall-cmd --quiet --direct --add-rule ipv4 filter BLACKLIST 0 -s ipaddress -j DROP';
+
+# my($ADDRULE) = '/sbin/iptables -I BLACKLIST -s ipaddress -j DROP';
 # my($ADDRULE) = '/sbin/iptables -I INPUT -s ipaddress -j DROP'; #Generic
 #
 #
@@ -89,7 +95,14 @@ my($ADDRULE) = '/sbin/iptables -I BLACKLIST -s ipaddress -j DROP';
 #
 # ######### ########### IPTABLES VERSION ############ ###########
 #
-my($DELRULE) = '/sbin/iptables -D BLACKLIST -s ipaddress -j DROP';
+
+# Using firewall-cmd on CentOS 7
+my($DELRULE) = '/usr/bin/firewall-cmd --quiet --direct --remove-rule ipv4 filter BLACKLIST 0 -s ipaddress -j DROP';
+
+my($need2query) = 1;	# The firewalld needs to be queried before deleting a rule
+my($QUERYRULE) = 'firewall-cmd --direct --query-rule ipv4 filter BLACKLIST 0 -s ipaddress -j DROP';	# Do not use --quiet here.
+
+# my($DELRULE) = '/sbin/iptables -D BLACKLIST -s ipaddress -j DROP';
 # my($DELRULE) = '/sbin/iptables -D INPUT -s ipaddress -j DROP'; #Generic
 #
 #
@@ -100,7 +113,9 @@ my($DELRULE) = '/sbin/iptables -D BLACKLIST -s ipaddress -j DROP';
 # an illegal user. If you put both Illegal and Failed here
 # you might get double hits.
 #
-my($REASONS) = '(Failed password|Failed none)';
+# Original
+# my($REASONS) = '(Failed password|Failed none|Invalid user)';
+my($REASONS) = '(Failed password|Failed none|Invalid user|Bye Bye \[preauth\])';
 #
 # Maximum time (sec) before they are removed from the database
 # unless they are already blacklisted
@@ -117,7 +132,8 @@ my($MAXHITS) = 4;
 #
 # Maximum number of address listings before we hibernate.
 # This is an anti-DoS measure that will likely never fire.
-my($DOSBAIL) = 200;
+# my($DOSBAIL) = 200;
+my($DOSBAIL) = 500;
 #
 # Set the level of verbosity.  1 = more periodic detail printed.
 # 0 = only important stuff will be printed.
@@ -172,6 +188,7 @@ taillog();
 sub taillog {
    my($offset, $name, $line, $ip, $reason, $stall, $ind, $doscount) = '';
    my (@loser, @buildlist) = ();
+   my($need2reload) = 0;
 
    $offset = (-s $LOG); # Don't start at beginning, go to end
 
@@ -179,6 +196,7 @@ sub taillog {
 
    while (1==1) {
        sleep(1);
+       # sleep(60);
        $| = 1;
        $stall += 1;
        if ((-s $LOG) < $offset) {
@@ -217,6 +235,7 @@ sub taillog {
                      # See ya!
                        logit("$ip being blocked because of $reason",'1',$EMAILME);
                        blockIp($ip);
+			$need2reload++;	# Firewalld needs reloading
                        $loser[2] += 1; # Avoid double listings (???)
                      }
                      $line = join(',', @loser); # put back together for saving
@@ -239,6 +258,7 @@ sub taillog {
                next;
            } # End if match reasons
        } # End while read line
+
        $offset=tell(TAIL);
        close(TAIL);
 
@@ -267,7 +287,10 @@ sub taillog {
                 }
                 else {
                    freeIp($loser[0]);
-                   logit("Freeing $loser[0]", $CHATTY, $EMAILME);
+		$need2reload++;	# Firewalld needs reloading
+		# Suppress the Freed mails
+                   # logit("Freed $loser[0]", $CHATTY, $EMAILME);
+                   logit("Freed $loser[0]", $CHATTY, 0);
                 } #set free after $RELEASEDAYS
 
            }
@@ -279,7 +302,7 @@ sub taillog {
            # under denial of service attack.  Hibernate so we don't
            # fill up the iptables chain or route table.
            if ($doscount > $DOSBAIL) {
-              logit("Possible DOS attack. Sleeping.",'1',$EMAILME);
+              logit("SSHblack: Possible DOS attack. Sleeping.",'1',$EMAILME);
               sleep(86400);
            }
         } # End while reading
@@ -290,6 +313,13 @@ sub taillog {
         close (LIST);
         @buildlist = ();
        } # End cleanup check
+
+	if ($need2reload > 0) {
+	# firewall-cmd version needs to reload
+	logit("Reloading firewalld",$CHATTY,'0');
+	system('/usr/bin/firewall-cmd --reload --quiet');
+	$need2reload = 0;
+	}
 
    } # End while endless loop
 } # End sub taillog
@@ -314,6 +344,7 @@ sub blockIp {
 
    $rule =~ s/ipaddress/$ip/;
 
+   logit("Block host at $ip",'1','0');
    system("$rule");
 
    return;
@@ -327,12 +358,24 @@ sub freeIp {
 # and the command is executed.
 #
    my($ip) = @_;
-   my($rule) = $DELRULE;
+   logit("Free host at $ip",'1','0');
 
+   my($rule) = $DELRULE;
    $rule =~ s/ipaddress/$ip/;
 
-   system("$rule");
-
+   if ($need2query == 0) {
+     system("$rule");
+   } else {
+      my($query) = $QUERYRULE;
+      $query =~ s/ipaddress/$ip/;
+      my($result) = `$query`;	# firewalld query returns yes\n or no\n
+      if ($result =~ /yes/) {
+        logit("freeIp: Delete rule for host at $ip",'1','0');
+        system("$rule");
+      } else {
+        logit("freeIp: No firewalld rule found for host at $ip",'1','0');   # Do nothing
+      }
+   }
    return;
 } # End sub freeIp
 
