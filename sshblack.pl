@@ -62,8 +62,7 @@ my($LOCALNET) = '^(?:127\.0\.0\.1|130\.225\.86|130\.225\.87|10\.54)';
 #
 # Please see the SSHBLACK HOMEPAGE for many more examples of commands
 #
-#
-# ######### ########### IPTABLES VERSION ############ ###########
+# ######### ########### Firewalld VERSION ############ ###########
 
 # Using firewall-cmd on CentOS 7
 my($ADDRULE) = '/usr/bin/firewall-cmd --quiet --direct --add-rule ipv4 filter BLACKLIST 0 -s ipaddress -j DROP';
@@ -145,7 +144,6 @@ if ( $DAEMONIZE ) {
       # Send STDOUT and STDERR to LOGFILE
       open (STDOUT, ">>$OUTPUTLOG") or die "failed to open STDOUT";
       open (STDERR, ">&STDOUT") or die "failed to open STDERR";
-
     }
   }
   else {
@@ -381,4 +379,3 @@ sub logit
 
 #
 # End sshblack.pl
-

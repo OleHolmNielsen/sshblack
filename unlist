@@ -40,7 +40,7 @@ my($CACHE) = '/var/tmp/ssh-blacklist-pending';
 # my($DELRULE) = '/sbin/route del -host ipaddress gw 127.0.0.1'; #RH/Fedora
 # my($DELRULE) = 'route delete ipaddress 127.0.0.1'; #Solaris?
 #
-# ######### ########### IPTABLES VERSION ############ ###########
+# ######### ########### Firewalld VERSION ############ ###########
 #
 
 # Using firewall-cmd on CentOS 7
@@ -49,8 +49,6 @@ my($DELRULE) = '/usr/bin/firewall-cmd --direct --remove-rule ipv4 filter BLACKLI
 #
 ########### No user defined paramters below ################
 #
-
-
    my ($ip) = $ARGV[0];
    my ($line) = '';
    my (@loser, @buildlist) = ();
@@ -90,6 +88,3 @@ sub freeIp {
 
    return;
 } # End sub freeIp
-
-
-# End sshblack.pl

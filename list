@@ -39,7 +39,7 @@ my($CACHE) = '/var/tmp/ssh-blacklist-pending';
 # my($ADDRULE) = '/sbin/route add -host ipaddress gw 127.0.0.1'; #RH/Fedora
 # my($ADDRULE) = 'route add ipaddress 127.0.0.1'; #Solaris?
 #
-# ######### ########### IPTABLES VERSION ############ ###########
+# ######### ########### Firewalld VERSION ############ ###########
 #
 
 # Using firewall-cmd on CentOS 7
@@ -48,11 +48,6 @@ my($ADDRULE) = '/usr/bin/firewall-cmd --direct --add-rule ipv4 filter BLACKLIST 
 #
 ########### No user defined paramters below ################
 #
-
-
-
-
-
    my($ip) = $ARGV[0];
    my $loser= "$ip," . time() . ",6\n";
    blockIp($ip);   
@@ -61,13 +56,8 @@ my($ADDRULE) = '/usr/bin/firewall-cmd --direct --add-rule ipv4 filter BLACKLIST 
    print LIST $loser;
    close (LIST);
 
-
-
 #################################################
 sub blockIp {
-#
-#
-
    my($ip) = @_;
    my($rule) = $ADDRULE;
 
@@ -77,6 +67,3 @@ sub blockIp {
 
    return;
 } # End sub blockIp
-
-
-# End sshblack.pl

@@ -51,7 +51,7 @@ start() {
 	cat $SSHBLACK_RESTART
 	. $SSHBLACK_RESTART
 	echo List the BLACKLIST rules
-	iptables -S BLACKLIST
+	firewall-cmd --direct --get-rules ipv4 filter BLACKLIST
     else
 	echo No SSHBLACK BLACKLIST rules to restore
     fi
