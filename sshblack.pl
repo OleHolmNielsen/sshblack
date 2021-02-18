@@ -12,31 +12,17 @@
 # This is a script which tails the security log file and dynamically blocks
 # connections from hosts which meet certain criteria, using
 # command-line kernel-level firewall configuration tools provided by
-# the operating system (specifically, iptables).
-# If you prefer to use something other than iptables, you can have
+# the operating system (specifically, Firewalld).
+# If you prefer to use something other than Firewalld, you can have
 # the script execute any command for blocking and unblocking hosts by
 # modifying $ADDRULE and $DELRULE.  Please see the sshblack homepage
 # for many examples.
-# As the script is modifying iptables, it will need root access.
+# As the script is modifying the firewall, it will need root access.
 #
 # Note: this script can also be modified to monitor ANY log file
 # including apache (web) logs and sendmail (mail) logs.  The
 # aggressiveness can be adjusted by setting the variables in the
 # first few lines.  It will probably work well right out of the box.
-#
-#
-# Setup:  You need to create the initial chain that ssh-black will work with.
-##      For iptables, you would do this:
-# iptables -N BLACKLIST
-##      This creates a new chain called BLACKLIST
-##      Then you would do this:
-# iptables -A INPUT -p tcp -m tcp --dport 22 --syn -j BLACKLIST
-##      Send all TCP port 22 packets through the chain.  We will be adding
-##      DROP jumps to this chain with the program below. Note this example
-##      command uses the add (-A) command which will place the new rule at
-##      the END of the INPUT chain.  Move it as necessary or use the
-##      insert (-I) command instead.
-##
 #
 # If you have the DAEMONIZE variable set below, you can run the script by
 # simply typing the filename from the command prompt. If you clear the
@@ -82,10 +68,6 @@ my($LOCALNET) = '^(?:127\.0\.0\.1|130\.225\.86|130\.225\.87|10\.54)';
 # Using firewall-cmd on CentOS 7
 my($ADDRULE) = '/usr/bin/firewall-cmd --quiet --direct --add-rule ipv4 filter BLACKLIST 0 -s ipaddress -j DROP';
 
-# my($ADDRULE) = '/sbin/iptables -I BLACKLIST -s ipaddress -j DROP';
-# my($ADDRULE) = '/sbin/iptables -I INPUT -s ipaddress -j DROP'; #Generic
-#
-#
 # Set $DELRULE to the complete command line instruction for REMOVING
 # attackers from the blacklist with the following change:
 # - Substitute the literal string 'ipaddress' in the location where
@@ -93,8 +75,7 @@ my($ADDRULE) = '/usr/bin/firewall-cmd --quiet --direct --add-rule ipv4 filter BL
 #
 # Please see the SSHBLACK website for many more examples of commands
 #
-# ######### ########### IPTABLES VERSION ############ ###########
-#
+# ######### ########### Firewalld VERSION ############ ###########
 
 # Using firewall-cmd on CentOS 7
 my($DELRULE) = '/usr/bin/firewall-cmd --quiet --direct --remove-rule ipv4 filter BLACKLIST 0 -s ipaddress -j DROP';
@@ -102,10 +83,6 @@ my($DELRULE) = '/usr/bin/firewall-cmd --quiet --direct --remove-rule ipv4 filter
 my($need2query) = 1;	# The firewalld needs to be queried before deleting a rule
 my($QUERYRULE) = 'firewall-cmd --direct --query-rule ipv4 filter BLACKLIST 0 -s ipaddress -j DROP';	# Do not use --quiet here.
 
-# my($DELRULE) = '/sbin/iptables -D BLACKLIST -s ipaddress -j DROP';
-# my($DELRULE) = '/sbin/iptables -D INPUT -s ipaddress -j DROP'; #Generic
-#
-#
 # Regex of reasons to get firewalled. Separate with pipe (|).
 # This VARIES BASED ON THE VERSION OF SOFTWARE YOU ARE RUNNING
 # Look at your logs and adjust as necessary.
@@ -269,7 +246,7 @@ sub taillog {
         # with MAXHITS in the past AGEOUT seconds or c) not blacklisted and have
         # not been in the database for AGEOUT seconds.  If we find either condition
         # (a) or (b) we remove them from the database and (if required) remove
-        # them from the iptables blacklist.
+        # them from the Firewalld blacklist.
 
         $stall = 0; # Clear out cleanup timer
         $doscount = 0; # Clear the denial-of-service counter
@@ -300,7 +277,7 @@ sub taillog {
            }
            # If we have more than DOSBAIL listings, we are probably
            # under denial of service attack.  Hibernate so we don't
-           # fill up the iptables chain or route table.
+           # fill up the Firewalld chain or route table.
            if ($doscount > $DOSBAIL) {
               logit("SSHblack: Possible DOS attack. Sleeping.",'1',$EMAILME);
               sleep(86400);
