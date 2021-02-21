@@ -1,13 +1,10 @@
 #!/usr/bin/perl -w
 #
-# sshblack.pl Version 2.8.1
+# sshblack.pl Version 3.0.1
 #
+# based on sshblack.pl version 2.8.1 from http://www.pettingers.org/code/sshblack.html
 # based on mailmgr (c) 2003, Julian Haight, All Rights reserved under GPL license:
 # http://www.gnu.org/licenses/gpl.txt
-# Modified on 02AUG04 as provided under GNU GPL licensing
-#
-#     See http://www.pettingers.org/code/sshblack.html
-#     for details on this and a complete README.TXT file and INSTALL.TXT file
 # -------------------------------------------------------
 # This is a script which tails the security log file and dynamically blocks
 # connections from hosts which meet certain criteria, using
