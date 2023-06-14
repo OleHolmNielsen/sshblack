@@ -7,9 +7,7 @@ After=firewalld.service NetworkManager.service sshd.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/libexec/sshblack/init-sshblack start
-ExecStop=/usr/libexec/sshblack/init-sshblack stop
-ExecReload=/usr/libexec/sshblack/init-sshblack reload
+ExecStart=/usr/local/sbin/sshblack.pl
 
 [Install]
 WantedBy=basic.target
