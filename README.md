@@ -12,7 +12,7 @@ Installation
 ------------
 
 The files in this folder are installed to EL8 orEL9 systems using the script ```install.sh```.
-The script ```install.sh``` should be used on CentOS7/EL7 systems.
+The script ```install.sh-el7``` should be used on CentOS7/EL7 systems.
 
 In addition, this crontab job is useful for getting E-mail alerts:
 
