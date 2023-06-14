@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This installation script has been tested on CentOS 7 and 8 systems
+# This installation script has been tested on EL8 and EL9 systems
 
 echo Installing sshblack files
 
@@ -14,12 +14,8 @@ echo Install logrotate file
 cp sshblacklisting.logrotate /etc/logrotate.d/sshblacklisting
 chmod 644 /etc/logrotate.d/sshblacklisting
 
-echo Create init file in /usr/libexec/sshblack
-mkdir /usr/libexec/sshblack 
-install init-sshblack /usr/libexec/sshblack
-
-echo Create Systemd service file in /usr/lib/systemd/system
-install -m 644 sshblack.service /usr/lib/systemd/system
+echo Create Systemd service file in /etc/systemd/system
+install -m 644 sshblack.service /etc/systemd/system
 
 echo Start and enable the sshblack service
 systemctl enable sshblack
