@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# This script is only used on CentOS7/EL7 systems.
+
 # Initscript template from https://fedoraproject.org/wiki/Packaging:SysVInitScript?rd=Packaging/SysVInitScript#Initscript_template
 #
 # sshblack	Startup script for the sshblack daemon
